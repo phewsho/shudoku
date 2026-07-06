@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>슈도쿠</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #140e1f;
+    --bg2: #1c1330;
+    --panel: #221837;
+    --line: #3a2a58;
+    --pink: #ff6ec7;
+    --mint: #7dffd1;
+    --gold: #ffd166;
+    --lilac: #b39dff;
+    --text: #f1eaff;
+    --muted: #9884c2;
+    --danger: #ff5d7a;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(circle at 15% 10%, rgba(255,110,199,0.12), transparent 40%),
+      radial-gradient(circle at 85% 90%, rgba(125,255,209,0.10), transparent 40%),
+      linear-gradient(180deg, var(--bg), var(--bg2));
+    color:var(--text);
+    font-family:'Inter', sans-serif;
+    display:flex;
+    justify-content:center;
+    padding:24px 14px 60px;
+  }
+  .wrap{width:100%; max-width:520px;}
+
+  header{text-align:center; margin-bottom:10px; position:relative;}
+  h1{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size:32px;
+    margin:0;
+    letter-spacing:0.5px;
+    background:linear-gradient(90deg, var(--pink), var(--gold), var(--mint));
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+  .sub{color:var(--muted); font-size:13px; margin-top:4px; font-weight:500;}
+  .paw{position:absolute; font-size:20px; opacity:0.35;}
+  .paw.p1{top:-6px; left:6px; transform:rotate(-18deg);}
+  .paw.p2{top:2px; right:2px; transform:rotate(22deg);}
+
+  .player-row{
+    display:flex; align-items:center; justify-content:center; gap:6px;
+    margin:8px 0 4px; font-size:12.5px; color:var(--muted); font-weight:600;
+  }
+  .player-row b{color:var(--gold);}
+  .player-row button{
+    background:none; border:none; color:var(--muted); cursor:pointer;
+    font-size:12px; text-decoration:underline; padding:0;
+  }
+
+  .rules{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:8px;
+    margin:14px 0 12px;
+  }
+  .rule{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:10px 6px;
+    font-size:11.5px;
+    text-align:center;
+    color:var(--muted);
+    line-height:1.35;
+    font-weight:600;
+  }
+
+  .bar{
+    display:flex; justify-content:space-between; align-items:center;
+    margin:10px 0; gap:8px; flex-wrap:wrap;
+  }
+  .stat{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:8px 12px;
+    font-size:13px;
+    font-weight:600;
+    color:var(--text);
+    display:flex; align-items:center; gap:6px;
+  }
+  .stat b{font-family:'Baloo 2'; font-size:15px; color:var(--gold);}
+  .mistakes{font-size:14px; letter-spacing:1px;}
+
+  select{
+    font-family:'Inter', sans-serif;
+    font-weight:600;
+    background:var(--panel);
+    color:var(--text);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:8px 10px;
+    font-size:13px;
+  }
+
+  .board{
+    background:var(--panel);
+    border:2px solid var(--line);
+    border-radius:16px;
+    padding:8px;
+    display:grid;
+    gap:3px;
+    aspect-ratio:1/1;
+    box-shadow:0 10px 40px rgba(0,0,0,0.35);
+  }
+  .cell{
+    display:flex; align-items:center; justify-content:center;
+    border-radius:8px;
+    cursor:pointer;
+    position:relative;
+    user-select:none;
+    -webkit-user-select:none;
+    touch-action:none;
+    transition:filter 0.12s ease;
+    aspect-ratio:1/1;
+    font-weight:800;
+    color:#ffffff;
+  }
+  .cell:hover{filter:brightness(1.08);}
+  .cell.hinted{animation:pop 0.35s ease;}
+  .cell.shake{animation:shake 0.3s ease;}
+  @keyframes shake{
+    0%,100%{transform:translateX(0);}
+    25%{transform:translateX(-3px);}
+    75%{transform:translateX(3px);}
+  }
+  @keyframes pop{
+    0%{transform:scale(0.5); opacity:0.3;}
+    60%{transform:scale(1.2);}
+    100%{transform:scale(1);}
+  }
+  .mark-x{opacity:0.85; font-weight:800;}
+  .mark-cat{filter:drop-shadow(0 2px 3px rgba(0,0,0,0.35));}
+  .mark-wrong{color:var(--danger); font-weight:900; text-shadow:0 0 6px rgba(255,93,122,0.5);}
+
+  .actions{
+    margin-top:14px;
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:8px;
+  }
+  .actions button{
+    background:transparent;
+    border:1px solid var(--line);
+    color:var(--text);
+    border-radius:12px;
+    padding:10px 0;
+    font-size:13px;
+    font-family:'Inter', sans-serif;
+    font-weight:600;
+    cursor:pointer;
+  }
+  .actions button:hover{background:rgba(255,255,255,0.05);}
+  .actions button.primary{
+    background:linear-gradient(90deg, var(--pink), var(--lilac));
+    color:#1a1025;
+    border:none;
+  }
+
+  .leaderboard-panel{
+    margin-top:18px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:14px;
+  }
+  .lb-header{
+    display:flex; align-items:center; justify-content:space-between;
+    font-family:'Baloo 2'; font-size:16px; margin-bottom:10px; color:var(--gold);
+  }
+  .lb-header button{
+    background:none; border:1px solid var(--line); color:var(--text);
+    border-radius:10px; padding:5px 10px; font-size:12px; cursor:pointer; font-weight:600;
+  }
+  .sheet-setup{display:none; gap:6px; margin-bottom:10px;}
+  .sheet-setup input{
+    flex:1; background:var(--bg2); border:1px solid var(--line); border-radius:10px;
+    padding:8px 10px; color:var(--text); font-size:12px;
+  }
+  .sheet-setup button{
+    background:linear-gradient(90deg, var(--mint), var(--lilac));
+    border:none; color:#1a1025; border-radius:10px; padding:8px 14px;
+    font-weight:700; font-size:12px; cursor:pointer; white-space:nowrap;
+  }
+  .sheet-note{font-size:11px; color:var(--muted); margin:-4px 0 10px;}
+  .lb-list{display:flex; flex-direction:column; gap:6px;}
+  .lb-empty{color:var(--muted); font-size:13px; text-align:center; padding:14px 0;}
+  .lb-row{
+    display:grid;
+    grid-template-columns:24px 1fr 58px 62px 46px;
+    align-items:center;
+    gap:6px;
+    background:rgba(255,255,255,0.03);
+    border-radius:10px;
+    padding:8px 10px;
+    font-size:12.5px;
+  }
+  .lb-rank{color:var(--gold); font-weight:800; font-family:'Baloo 2';}
+  .lb-name{font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .lb-time{color:var(--mint); font-weight:700;}
+  .lb-mistakes{color:var(--muted); font-size:11.5px;}
+  .lb-stage{color:var(--lilac); font-size:11.5px; text-align:right;}
+
+  .overlay{
+    position:fixed; inset:0; background:rgba(10,6,20,0.75);
+    display:none; align-items:center; justify-content:center; z-index:20;
+    backdrop-filter:blur(4px);
+  }
+  .overlay.show{display:flex;}
+  .modal{
+    background:var(--panel); border:1px solid var(--line);
+    border-radius:20px; padding:28px 24px; text-align:center;
+    max-width:320px; width:90%;
+  }
+  .modal .emoji{font-size:52px; margin-bottom:8px;}
+  .modal h2{font-family:'Baloo 2'; margin:0 0 6px; font-size:24px; color:var(--gold);}
+  .modal p{color:var(--muted); font-size:14px; margin:0 0 18px;}
+  .modal input{
+    width:100%; background:var(--bg2); border:1px solid var(--line); border-radius:12px;
+    padding:10px 12px; color:var(--text); font-size:14px; margin-bottom:14px; text-align:center;
+  }
+  .modal button{
+    background:linear-gradient(90deg, var(--mint), var(--lilac));
+    border:none; color:#1a1025; padding:10px 22px; border-radius:12px;
+    font-weight:700; font-size:14px; cursor:pointer;
+  }
+
+  footer{text-align:center; margin-top:18px; color:var(--muted); font-size:11px; line-height:1.6;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="paw p1">🐾</span>
+    <h1>슈 도 쿠</h1>
+    <span class="paw p2">🐾</span>
+    <div class="sub">스도쿠 × 지뢰찾기, 고양이 자리 찾기 퍼즐</div>
+  </header>
+
+  <div class="player-row">
+    👤 <b id="playerNameDisplay">-</b>
+    <button id="changeNameBtn">이름 변경</button>
+  </div>
+
+  <div class="rules">
+    <div class="rule">색상별로<br>고양이 1마리</div>
+    <div class="rule">각 열과 행에<br>고양이 한 마리씩</div>
+    <div class="rule">고양이는<br>만질 수 없어요</div>
+  </div>
+
+  <div class="bar">
+    <select id="difficulty">
+      <option value="6">쉬움 6×6</option>
+      <option value="8" selected>보통 8×8</option>
+      <option value="10">어려움 10×10</option>
+    </select>
+    <div class="stat">🏁 스테이지 <b id="stageDisplay">1</b></div>
+    <div class="stat">⏱ <b id="timer">00:00</b></div>
+    <div class="stat mistakes">❌ <b id="mistakeCount">0</b>/3</div>
+  </div>
+
+  <div class="board" id="board"></div>
+
+  <div class="actions">
+    <button id="newGameBtn">새 게임</button>
+    <button id="hintBtn">힌트 💡 (<span id="hintCount">3</span>)</button>
+    <button id="resetBtn" class="primary">초기화</button>
+  </div>
+
+  <div class="leaderboard-panel">
+    <div class="lb-header">
+      <span>🏆 리더보드</span>
+      <button id="refreshLbBtn">새로고침</button>
+    </div>
+    <div class="sheet-setup" id="sheetSetup">
+      <input id="sheetUrlInput" placeholder="Apps Script 웹앱 URL 붙여넣기">
+      <button id="saveSheetUrlBtn">저장</button>
+    </div>
+    <div class="sheet-note" id="sheetNote">구글 스프레드시트 웹앱 URL을 한 번 등록하면 기록이 자동으로 쌓여요.</div>
+    <div class="lb-list" id="lbList"><div class="lb-empty">불러오는 중...</div></div>
+  </div>
+
+  <footer>
+    빈 칸을 드래그하면 여러 칸을 한번에 ✕로 표시할 수 있어요.<br>
+    고양이가 있다고 생각하는 칸은 더블클릭(더블탭)! 틀리면 빨간 X가 쌓이고, 3개가 되면 게임 오버예요.
+  </footer>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="emoji" id="resultEmoji">🐈</div>
+    <h2 id="resultTitle">냥냥 클리어!</h2>
+    <p id="resultDesc">고양이들이 모두 자기 자리를 찾았어요.</p>
+    <button id="playAgainBtn">다시 하기</button>
+  </div>
+</div>
+
+<div class="overlay" id="nameOverlay">
+  <div class="modal">
+    <div class="emoji">😺</div>
+    <h2>이름을 알려주세요</h2>
+    <p>리더보드에 표시될 이름이에요. 이 컴퓨터에 한 번만 저장돼요.</p>
+    <input id="nameInput" placeholder="이름 입력" maxlength="12">
+    <button id="saveNameBtn">시작하기</button>
+  </div>
+</div>
+
+<script>
+const REGION_COLORS = [
+  '#4fc3f7', '#ba68c8', '#ffca28', '#ec407a', '#26c6da',
+  '#ff8a65', '#9ccc65', '#f06292', '#7986cb', '#ffd54f'
+];
+const CAT = '🐱';
+const XMARK = '✕';
+const DOUBLE_CLICK_MS = 300;
+
+const LS_NAME = 'nyangqueens_name';
+const LS_STAGE = 'nyangqueens_stage';
+const LS_SHEET = 'nyangqueens_sheet_url';
+const DEFAULT_SHEET_URL = 'https://script.google.com/macros/s/AKfycbyHPxo31OXG9ZQz0NjKwJIQQF4Ws0UfWgzQL8i4ZlLX28Lof4vnIQfLCyfUmViAdYT_KQ/exec';
+
+let n = 8;
+let cols = [];
+let regions = [];
+let grid = [];
+let mistakes = 0;
+let hintsLeft = 3;
+let gameOver = false;
+let seconds = 0;
+let timerInterval = null;
+
+let playerName = localStorage.getItem(LS_NAME) || '';
+let stage = parseInt(localStorage.getItem(LS_STAGE) || '1', 10);
+let sheetUrl = localStorage.getItem(LS_SHEET) || DEFAULT_SHEET_URL;
+
+// drag / click state
+let pointerDown = false;
+let dragMoved = false;
+let dragStartCell = null;
+let dragPaintValue = 0;
+let lastClickCell = null;
+let lastClickTime = 0;
+let pendingClickTimeout = null;
+
+function shuffle(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// ---------- Puzzle generation ----------
+function generateSolution(size){
+  const usedCols = new Array(size).fill(false);
+  const result = new Array(size).fill(-1);
+  function backtrack(row, prevCol){
+    if(row === size) return true;
+    const order = shuffle([...Array(size).keys()]);
+    for(const col of order){
+      if(usedCols[col]) continue;
+      if(prevCol !== -1 && Math.abs(col - prevCol) <= 1) continue;
+      usedCols[col] = true;
+      result[row] = col;
+      if(backtrack(row + 1, col)) return true;
+      usedCols[col] = false;
+      result[row] = -1;
+    }
+    return false;
+  }
+  return backtrack(0, -1) ? result : null;
+}
+
+function growRegions(size, solutionCols){
+  const reg = Array.from({length:size}, () => Array(size).fill(-1));
+  for(let r=0;r<size;r++) reg[r][solutionCols[r]] = r;
+
+  let unassigned = [];
+  for(let r=0;r<size;r++) for(let c=0;c<size;c++){
+    if(reg[r][c] === -1) unassigned.push([r,c]);
+  }
+  const dirs = [[-1,0],[1,0],[0,-1],[0,1]];
+  let guard = 0;
+  while(unassigned.length > 0 && guard < 20000){
+    guard++;
+    shuffle(unassigned);
+    const next = [];
+    for(const [r,c] of unassigned){
+      const neighborRegions = [];
+      for(const [dr,dc] of dirs){
+        const nr = r+dr, nc = c+dc;
+        if(nr>=0 && nr<size && nc>=0 && nc<size && reg[nr][nc] !== -1){
+          neighborRegions.push(reg[nr][nc]);
+        }
+      }
+      if(neighborRegions.length > 0){
+        reg[r][c] = neighborRegions[Math.floor(Math.random()*neighborRegions.length)];
+      } else {
+        next.push([r,c]);
+      }
+    }
+    if(next.length === unassigned.length){
+      const [r,c] = next.pop();
+      reg[r][c] = 0;
+    }
+    unassigned = next;
+  }
+  return reg;
+}
+
+function countSolutions(size, reg, limit){
+  let count = 0;
+  const usedCols = new Array(size).fill(false);
+  const usedRegions = new Array(size).fill(false);
+  function backtrack(row, prevCol){
+    if(count >= limit) return;
+    if(row === size){ count++; return; }
+    for(let col=0; col<size; col++){
+      if(usedCols[col]) continue;
+      if(prevCol !== -1 && Math.abs(col - prevCol) <= 1) continue;
+      const r = reg[row][col];
+      if(usedRegions[r]) continue;
+      usedCols[col] = true; usedRegions[r] = true;
+      backtrack(row+1, col);
+      usedCols[col] = false; usedRegions[r] = false;
+      if(count >= limit) return;
+    }
+  }
+  backtrack(0, -1);
+  return count;
+}
+
+function generatePuzzle(size){
+  const maxAttempts = 150;
+  let bestCols = null, bestRegions = null;
+  for(let attempt=0; attempt<maxAttempts; attempt++){
+    const s = generateSolution(size);
+    if(!s) continue;
+    const r = growRegions(size, s);
+    if(!bestCols){ bestCols = s; bestRegions = r; }
+    if(countSolutions(size, r, 2) === 1){
+      return { cols: s, regions: r };
+    }
+  }
+  return { cols: bestCols, regions: bestRegions };
+}
+
+// ---------- Rendering ----------
+function buildBoardDOM(){
+  const board = document.getElementById('board');
+  board.style.gridTemplateColumns = `repeat(${n}, 1fr)`;
+  board.style.gridTemplateRows = `repeat(${n}, 1fr)`;
+  board.innerHTML = '';
+  for(let r=0;r<n;r++){
+    for(let c=0;c<n;c++){
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.dataset.row = r;
+      cell.dataset.col = c;
+      cell.style.background = REGION_COLORS[regions[r][c]];
+      cell.style.fontSize = `clamp(14px, ${Math.max(16, 70/n)}vw, 30px)`;
+      cell.addEventListener('pointerdown', (e) => onPointerDown(e, r, c));
+      board.appendChild(cell);
+    }
+  }
+}
+
+function updateCellDOM(r, c){
+  const cell = document.querySelector(`.cell[data-row="${r}"][data-col="${c}"]`);
+  if(!cell) return;
+  const v = grid[r][c];
+  if(v === 0) cell.innerHTML = '';
+  else if(v === 1) cell.innerHTML = `<span class="mark-x">${XMARK}</span>`;
+  else if(v === 2) cell.innerHTML = `<span class="mark-cat">${CAT}</span>`;
+  else cell.innerHTML = `<span class="mark-wrong">${XMARK}</span>`;
+}
+
+function render(){
+  for(let r=0;r<n;r++) for(let c=0;c<n;c++) updateCellDOM(r,c);
+  const placed = grid.flat().filter(v => v === 2).length;
+  document.getElementById('hintCount').textContent = hintsLeft;
+  document.getElementById('mistakeCount').textContent = mistakes;
+}
+
+// ---------- Drag / click interaction ----------
+function onPointerDown(e, r, c){
+  if(gameOver) return;
+  const state = grid[r][c];
+  if(state === 2 || state === 3) return;
+  e.preventDefault();
+  pointerDown = true;
+  dragMoved = false;
+  dragStartCell = [r, c];
+  dragPaintValue = state === 1 ? 0 : 1;
+}
+
+document.addEventListener('pointermove', (e) => {
+  if(!pointerDown) return;
+  const el = document.elementFromPoint(e.clientX, e.clientY);
+  if(!el || !el.classList.contains('cell')) return;
+  const r = parseInt(el.dataset.row, 10), c = parseInt(el.dataset.col, 10);
+  if(r === dragStartCell[0] && c === dragStartCell[1] && !dragMoved) return;
+  dragMoved = true;
+  paintX(r, c, dragPaintValue);
+});
+
+document.addEventListener('pointerup', () => {
+  if(!pointerDown) return;
+  pointerDown = false;
+  const [r, c] = dragStartCell;
+  if(dragMoved){
+    paintX(r, c, dragPaintValue);
+    return;
+  }
+  const now = Date.now();
+  if(lastClickCell && lastClickCell[0] === r && lastClickCell[1] === c && (now - lastClickTime) < DOUBLE_CLICK_MS){
+    clearTimeout(pendingClickTimeout);
+    pendingClickTimeout = null;
+    lastClickCell = null;
+    reveal(r, c);
+  } else {
+    lastClickCell = [r, c];
+    lastClickTime = now;
+    pendingClickTimeout = setTimeout(() => {
+      toggleX(r, c);
+      lastClickCell = null;
+    }, DOUBLE_CLICK_MS);
+  }
+});
+
+function paintX(r, c, value){
+  const state = grid[r][c];
+  if(state === 2 || state === 3) return;
+  if(state !== value){
+    grid[r][c] = value;
+    updateCellDOM(r, c);
+  }
+}
+
+function toggleX(r, c){
+  if(gameOver) return;
+  const state = grid[r][c];
+  if(state === 2 || state === 3) return;
+  grid[r][c] = state === 1 ? 0 : 1;
+  updateCellDOM(r, c);
+}
+
+// ---------- Game logic ----------
+function autoMarkAssist(r, c){
+  for(let i=0;i<n;i++){
+    if(grid[r][i] === 0) grid[r][i] = 1;
+    if(grid[i][c] === 0) grid[i][c] = 1;
+  }
+  for(let i=0;i<n;i++) for(let j=0;j<n;j++){
+    if(regions[i][j] === regions[r][c] && grid[i][j] === 0) grid[i][j] = 1;
+  }
+  for(let dr=-1; dr<=1; dr++){
+    for(let dc=-1; dc<=1; dc++){
+      const nr = r+dr, nc = c+dc;
+      if(nr>=0 && nr<n && nc>=0 && nc<n && grid[nr][nc] === 0) grid[nr][nc] = 1;
+    }
+  }
+}
+
+function reveal(r, c){
+  if(gameOver) return;
+  const state = grid[r][c];
+  if(state === 2 || state === 3) return;
+  if(cols[r] === c){
+    grid[r][c] = 2;
+    autoMarkAssist(r, c);
+    render();
+    checkWin();
+  } else {
+    grid[r][c] = 3;
+    mistakes++;
+    render();
+    const cellEl = document.querySelector(`.cell[data-row="${r}"][data-col="${c}"]`);
+    if(cellEl){ cellEl.classList.add('shake'); setTimeout(() => cellEl.classList.remove('shake'), 320); }
+    if(mistakes >= 3) endGame(false);
+  }
+}
+
+function onHint(){
+  if(gameOver || hintsLeft <= 0) return;
+  const rowsWithCat = new Set();
+  for(let r=0;r<n;r++) for(let c=0;c<n;c++) if(grid[r][c] === 2) rowsWithCat.add(r);
+  const candidates = [];
+  for(let r=0;r<n;r++) if(!rowsWithCat.has(r)) candidates.push(r);
+  if(candidates.length === 0) return;
+  const r = candidates[Math.floor(Math.random()*candidates.length)];
+  const c = cols[r];
+  grid[r][c] = 2;
+  autoMarkAssist(r, c);
+  hintsLeft--;
+  render();
+  const cellEl = document.querySelector(`.cell[data-row="${r}"][data-col="${c}"]`);
+  if(cellEl) cellEl.classList.add('hinted');
+  checkWin();
+}
+
+function checkWin(){
+  const placed = grid.flat().filter(v => v === 2).length;
+  if(placed === n) endGame(true);
+}
+
+// ---------- Timer ----------
+function startTimer(){
+  clearInterval(timerInterval);
+  seconds = 0;
+  document.getElementById('timer').textContent = '00:00';
+  timerInterval = setInterval(() => {
+    seconds++;
+    document.getElementById('timer').textContent = formatSeconds(seconds);
+  }, 1000);
+}
+
+function formatSeconds(s){
+  s = Math.round(Number(s) || 0);
+  const m = String(Math.floor(s/60)).padStart(2,'0');
+  const sec = String(s%60).padStart(2,'0');
+  return `${m}:${sec}`;
+}
+
+// ---------- Game flow ----------
+function endGame(won){
+  gameOver = true;
+  clearInterval(timerInterval);
+  const overlay = document.getElementById('overlay');
+  const emoji = document.getElementById('resultEmoji');
+  const title = document.getElementById('resultTitle');
+  const desc = document.getElementById('resultDesc');
+  if(won){
+    emoji.textContent = '😻';
+    title.textContent = '냥냥 클리어!';
+    desc.textContent = `${formatSeconds(seconds)} 만에 완성! 실수 ${mistakes}번, 힌트 ${3-hintsLeft}번.`;
+    stage++;
+    localStorage.setItem(LS_STAGE, stage);
+    document.getElementById('stageDisplay').textContent = stage;
+    submitScore();
+  } else {
+    emoji.textContent = '🙀';
+    title.textContent = '으악, 빨간 X가 3개!';
+    desc.textContent = '고양이들이 흩어져버렸어요. 다시 도전해봐요.';
+  }
+  overlay.classList.add('show');
+}
+
+function newGame(){
+  document.getElementById('overlay').classList.remove('show');
+  n = parseInt(document.getElementById('difficulty').value, 10);
+  const puzzle = generatePuzzle(n);
+  cols = puzzle.cols;
+  regions = puzzle.regions;
+  grid = Array.from({length:n}, () => Array(n).fill(0));
+  mistakes = 0;
+  hintsLeft = 3;
+  gameOver = false;
+  buildBoardDOM();
+  render();
+  startTimer();
+}
+
+function resetBoard(){
+  if(gameOver) return;
+  grid = Array.from({length:n}, () => Array(n).fill(0));
+  mistakes = 0;
+  render();
+  startTimer();
+}
+
+document.getElementById('newGameBtn').addEventListener('click', newGame);
+document.getElementById('hintBtn').addEventListener('click', onHint);
+document.getElementById('resetBtn').addEventListener('click', resetBoard);
+document.getElementById('playAgainBtn').addEventListener('click', newGame);
+document.getElementById('difficulty').addEventListener('change', newGame);
+
+// ---------- Player name ----------
+function initName(){
+  document.getElementById('stageDisplay').textContent = stage;
+  if(!playerName){
+    document.getElementById('nameOverlay').classList.add('show');
+  } else {
+    document.getElementById('playerNameDisplay').textContent = playerName;
+  }
+}
+document.getElementById('saveNameBtn').addEventListener('click', () => {
+  const val = document.getElementById('nameInput').value.trim();
+  if(!val) return;
+  playerName = val;
+  localStorage.setItem(LS_NAME, val);
+  document.getElementById('nameOverlay').classList.remove('show');
+  document.getElementById('playerNameDisplay').textContent = playerName;
+});
+document.getElementById('changeNameBtn').addEventListener('click', () => {
+  document.getElementById('nameInput').value = playerName;
+  document.getElementById('nameOverlay').classList.add('show');
+});
+
+// ---------- Leaderboard (Google Sheets via Apps Script) ----------
+function initSheetUI(){
+  if(!sheetUrl){
+    document.getElementById('sheetSetup').style.display = 'flex';
+    document.getElementById('lbList').innerHTML = '<div class="lb-empty">웹앱 URL을 등록하면 리더보드가 표시돼요.</div>';
+  } else {
+    document.getElementById('sheetUrlInput').value = sheetUrl;
+    loadLeaderboard();
+  }
+}
+document.getElementById('saveSheetUrlBtn').addEventListener('click', () => {
+  const val = document.getElementById('sheetUrlInput').value.trim();
+  if(!val) return;
+  sheetUrl = val;
+  localStorage.setItem(LS_SHEET, val);
+  document.getElementById('sheetSetup').style.display = 'none';
+  loadLeaderboard();
+});
+document.getElementById('refreshLbBtn').addEventListener('click', loadLeaderboard);
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+async function loadLeaderboard(){
+  if(!sheetUrl) return;
+  const list = document.getElementById('lbList');
+  list.innerHTML = '<div class="lb-empty">불러오는 중...</div>';
+  try{
+    const sep = sheetUrl.includes('?') ? '&' : '?';
+    const res = await fetch(sheetUrl + sep + 'action=list');
+    const data = await res.json();
+    renderLeaderboard(data);
+  } catch(err){
+    list.innerHTML = '<div class="lb-empty">불러오기 실패. URL을 확인해주세요.</div>';
+  }
+}
+
+function renderLeaderboard(data){
+  const list = document.getElementById('lbList');
+  if(!Array.isArray(data) || data.length === 0){
+    list.innerHTML = '<div class="lb-empty">아직 기록이 없어요. 첫 번째 기록을 남겨보세요!</div>';
+    return;
+  }
+  const sorted = data.slice().sort((a, b) => Number(a.time) - Number(b.time)).slice(0, 20);
+  list.innerHTML = sorted.map((row, i) => `
+    <div class="lb-row">
+      <span class="lb-rank">${i+1}</span>
+      <span class="lb-name">${escapeHtml(String(row.name || '익명'))}</span>
+      <span class="lb-time">${formatSeconds(row.time)}</span>
+      <span class="lb-mistakes">실수 ${row.mistakes}</span>
+      <span class="lb-stage">St.${row.stage}</span>
+    </div>
+  `).join('');
+}
+
+async function submitScore(){
+  if(!sheetUrl) return;
+  try{
+    await fetch(sheetUrl, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({
+        name: playerName || '익명',
+        time: seconds,
+        mistakes: mistakes,
+        stage: stage,
+        difficulty: n
+      })
+    });
+  } catch(err){
+    console.error(err);
+  }
+  setTimeout(loadLeaderboard, 900);
+}
+
+// ---------- Init ----------
+initName();
+initSheetUI();
+newGame();
+</script>
+</body>
+</html>

@@ -299,7 +299,7 @@
 
   <footer>
     빈 칸을 드래그하면 여러 칸을 한번에 ✕로 표시할 수 있어요.<br>
-    고양이가 있다고 생각하는 칸은 더블클릭(더블탭)! 틀리면 빨간 X가 쌓이고, 3개가 되면 게임 오버예요.
+    고양이가 있다고 생각하는 칸은 더블클릭(더블탭)! 틀리면 검은 X가 쌓이고, 3개가 되면 게임 오버예요.
   </footer>
 </div>
 
@@ -657,7 +657,7 @@ function endGame(won){
     submitScore();
   } else {
     emoji.textContent = '🙀';
-    title.textContent = '으악, 빨간 X가 3개!';
+    title.textContent = '으악, 오류가 3개!';
     desc.textContent = '고양이들이 흩어져버렸어요. 다시 도전해봐요.';
   }
   overlay.classList.add('show');

@@ -154,10 +154,10 @@
     display:flex; align-items:center; justify-content:center;
     color:#000000; font-weight:800; font-size:15px;
   }
-  .mc.gold{background:#ffca28;}
-  .mc.pink{background:#ec407a;}
-  .mc.teal{background:#26c6da;}
-  .mc.blue{background:#4fc3f7;}
+  .mc.gold{background:#ffc959;}
+  .mc.pink{background:#d256e6;}
+  .mc.teal{background:#53c9c6;}
+  .mc.blue{background:#2959e6;}
   .cap{
     font-size:11px; color:var(--muted); text-align:center; margin-top:2px !important;
   }
@@ -251,7 +251,7 @@
   .actions{
     margin-top:14px;
     display:grid;
-    grid-template-columns:repeat(3, 1fr);
+    grid-template-columns:repeat(2, 1fr);
     gap:8px;
   }
   .actions button{
@@ -397,6 +397,7 @@
   <div class="actions">
     <button id="newGameBtn">새 게임</button>
     <button id="hintBtn">힌트 💡 (<span id="hintCount">1</span>)</button>
+    <button id="answerBtn">정답 보기 📖</button>
     <button id="resetBtn" class="primary">초기화</button>
   </div>
 
@@ -483,8 +484,16 @@
 
 <script>
 const REGION_COLORS = [
-  '#4fc3f7', '#ba68c8', '#ffca28', '#ec407a', '#1565c0',
-  '#ff8a65', '#9ccc65', '#f06292', '#7986cb', '#ffd54f'
+  '#8f96e6', // 연보라
+  '#d256e6', // 핑크
+  '#8656e6', // 보라
+  '#2959e6', // 파랑
+  '#1a8966', // 초록
+  '#53c9c6', // 민트
+  '#a9c949', // 연두
+  '#ffc959', // 노랑
+  '#f58c80', // 다홍
+  '#c22936'  // 레드
 ];
 const CAT = '🐱';
 const XMARK = '✕';
@@ -501,6 +510,8 @@ let regions = [];
 let grid = [];
 let mistakes = 0;
 let hintsLeft = 1;
+let totalHints = 1;
+let answerRevealed = false;
 let gameOver = false;
 let seconds = 0;
 let timerInterval = null;
@@ -734,6 +745,12 @@ function getStageSize(stage){
   return sizes[(stage * 9301 + 49297) % sizes.length];
 }
 
+function getHintCountForSize(size){
+  if(size <= 6) return 1;
+  if(size <= 8) return 2;
+  return 3; // 9x9, 10x10
+}
+
 function updateStageUI(){
   const size = getStageSize(stage);
   const infinite = stage > MAX_BUILT_STAGE;
@@ -901,7 +918,25 @@ function onHint(){
   checkWin();
 }
 
+function showAnswer(){
+  if(gameOver) return;
+  if(!confirm('정답을 보시겠어요? 이번 판은 리더보드에 기록되지 않아요.')) return;
+  gameOver = true;
+  answerRevealed = true;
+  clearInterval(timerInterval);
+  for(let r=0;r<n;r++){
+    grid[r][cols[r]] = 2;
+  }
+  render();
+  const overlay = document.getElementById('overlay');
+  document.getElementById('resultEmoji').textContent = '📖';
+  document.getElementById('resultTitle').textContent = '정답 공개';
+  document.getElementById('resultDesc').textContent = '정답을 확인했어요. 이 기록은 저장되지 않아요. 다시 도전해보세요!';
+  overlay.classList.add('show');
+}
+
 function checkWin(){
+  if(answerRevealed) return;
   const placed = grid.flat().filter(v => v === 2).length;
   if(placed === n) endGame(true);
 }
@@ -958,7 +993,7 @@ function endGame(won){
     } else {
       emoji.textContent = '😻';
       title.textContent = clearedStage > MAX_BUILT_STAGE ? '무한모드 클리어!' : '냥냥 클리어!';
-      desc.textContent = `${formatSeconds(seconds)} 만에 완성! 실수 ${mistakes}번, 힌트 ${1-hintsLeft}번. ${randomPraise()}`;
+      desc.textContent = `${formatSeconds(seconds)} 만에 완성! 실수 ${mistakes}번, 힌트 ${totalHints - hintsLeft}번. ${randomPraise()}`;
     }
     sfxWin();
     submitScore(clearedStage);
@@ -979,8 +1014,10 @@ function newGame(){
   regions = puzzle.regions;
   grid = Array.from({length:n}, () => Array(n).fill(0));
   mistakes = 0;
-  hintsLeft = 1;
+  hintsLeft = getHintCountForSize(n);
+  totalHints = hintsLeft;
   gameOver = false;
+  answerRevealed = false;
   buildBoardDOM();
   render();
   startTimer();
@@ -997,6 +1034,7 @@ function resetBoard(){
 
 document.getElementById('newGameBtn').addEventListener('click', newGame);
 document.getElementById('hintBtn').addEventListener('click', onHint);
+document.getElementById('answerBtn').addEventListener('click', showAnswer);
 document.getElementById('resetBtn').addEventListener('click', resetBoard);
 document.getElementById('playAgainBtn').addEventListener('click', newGame);
 

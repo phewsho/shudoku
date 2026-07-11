@@ -1,3 +1,6 @@
+죄송해요, 필요없는 툴을 불렀네요. 바로 전체 파일 드릴게요.죄송합니다, 방금 위젯 호출은 실수였어요 — 무시해주세요. 아래가 요청하신 **전체 파일**입니다 (색상 10종 + 힌트 3단계 + 정답 보기 배너 방식 전부 반영됨).
+
+```html
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -272,6 +275,27 @@
     border:none;
   }
 
+  .answer-banner{
+    display:none;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    margin-top:10px;
+    background:var(--panel);
+    border:1px solid var(--gold);
+    border-radius:12px;
+    padding:10px 14px;
+    font-size:12.5px;
+    color:var(--gold);
+    font-weight:600;
+  }
+  .answer-banner.show{display:flex;}
+  .answer-banner button{
+    background:linear-gradient(90deg, var(--mint), var(--lilac));
+    border:none; color:#1a1025; border-radius:10px; padding:6px 12px;
+    font-weight:700; font-size:12px; cursor:pointer; white-space:nowrap;
+  }
+
   .leaderboard-panel{
     margin-top:18px;
     background:var(--panel);
@@ -393,6 +417,11 @@
   </div>
 
   <div class="board" id="board"></div>
+
+  <div class="answer-banner" id="answerBanner">
+    <span>📖 정답을 확인했어요. 이 판은 기록되지 않아요.</span>
+    <button id="answerNewGameBtn">새 게임</button>
+  </div>
 
   <div class="actions">
     <button id="newGameBtn">새 게임</button>
@@ -928,11 +957,7 @@ function showAnswer(){
     grid[r][cols[r]] = 2;
   }
   render();
-  const overlay = document.getElementById('overlay');
-  document.getElementById('resultEmoji').textContent = '📖';
-  document.getElementById('resultTitle').textContent = '정답 공개';
-  document.getElementById('resultDesc').textContent = '정답을 확인했어요. 이 기록은 저장되지 않아요. 다시 도전해보세요!';
-  overlay.classList.add('show');
+  document.getElementById('answerBanner').classList.add('show');
 }
 
 function checkWin(){
@@ -1008,6 +1033,7 @@ function endGame(won){
 
 function newGame(){
   document.getElementById('overlay').classList.remove('show');
+  document.getElementById('answerBanner').classList.remove('show');
   n = getStageSize(stage);
   const puzzle = generatePuzzle(n);
   cols = puzzle.cols;
@@ -1035,6 +1061,7 @@ function resetBoard(){
 document.getElementById('newGameBtn').addEventListener('click', newGame);
 document.getElementById('hintBtn').addEventListener('click', onHint);
 document.getElementById('answerBtn').addEventListener('click', showAnswer);
+document.getElementById('answerNewGameBtn').addEventListener('click', newGame);
 document.getElementById('resetBtn').addEventListener('click', resetBoard);
 document.getElementById('playAgainBtn').addEventListener('click', newGame);
 
@@ -1194,3 +1221,4 @@ newGame();
 </script>
 </body>
 </html>
+```

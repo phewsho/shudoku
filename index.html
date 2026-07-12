@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -244,12 +245,30 @@
     60%{transform:scale(1.2);}
     100%{transform:scale(1);}
   }
-  .mark-x{color:#ffffff; opacity:0.9; font-weight:800;}
-  .mark-x-small{color:#ffffff; opacity:0.55; font-weight:700; font-size:0.5em;}
-  .mark-x-big{color:#ffffff; opacity:0.95; font-weight:900;}
+  .mark-x{
+    color:#ffffff;
+    opacity:0.95;
+    font-weight:800;
+    font-size:1.15em;
+    text-shadow:0 0 3px rgba(0,0,0,0.5), 0 1px 2px rgba(0,0,0,0.4);
+  }
   .mark-cat{filter:drop-shadow(0 2px 3px rgba(0,0,0,0.35));}
-  .mark-cat-hypo{opacity:0.5; filter:drop-shadow(0 2px 3px rgba(0,0,0,0.35)) saturate(0.5);}
-  .mark-wrong{color:#000000; font-weight:900;}
+  .wrong-x-mark{
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+  }
+  .wrong-x-mark::before,
+  .wrong-x-mark::after{
+    content:'';
+    position:absolute;
+    top:50%; left:50%;
+    width:150%; height:24%;
+    background:rgba(0,0,0,0.55);
+    filter:blur(3px);
+  }
+  .wrong-x-mark::before{ transform:translate(-50%,-50%) rotate(45deg); }
+  .wrong-x-mark::after{ transform:translate(-50%,-50%) rotate(-45deg); }
 
   .actions{
     margin-top:14px;
@@ -452,10 +471,8 @@
   </div>
 
   <footer>
-    빈 칸을 드래그하면 여러 칸을 한번에 작은 x로 표시할 수 있어요.<br>
-    고양이가 있다고 생각하는 칸은 더블클릭(더블탭)! 맞으면 주변이 자동으로 큰 X로 정리돼요. 틀리면 오류가 쌓이고, 3개가 되면 게임 오버예요.<br>
-    우클릭(폰에서는 길게 누르기)하면 가정 고양이를 놓아볼 수 있어요. 다시 우클릭/길게 누르면 지워져요.<br><br>
-    원작 게임: <a href="https://play.google.com/store/apps/details?id=com.oakever.meowdoku&hl=ko" target="_blank" rel="noopener" style="color:var(--mint);">Meowdoku (Google Play)</a>
+    빈 칸을 드래그하면 여러 칸을 한번에 ✕로 표시할 수 있어요.<br>
+    고양이가 있다고 생각하는 칸은 더블클릭(더블탭)! 틀리면 오류가 쌓이고, 3개가 되면 게임 오버예요.
   </footer>
 </div>
 
@@ -497,17 +514,17 @@
 
       <section>
         <h3>3. 가정하고 모순 찾기</h3>
-        <p>막히면 특정 칸에 <b>우클릭(폰은 길게 누르기)</b>으로 "가정 고양이"를 놓아보세요. 진짜 확정이 아니라 임시로 놓아보는 거라 언제든 다시 우클릭/길게 누르면 지워져요.</p>
+        <p>막히면 특정 칸에 "고양이가 있다"고 가정해보세요.</p>
         <ul>
-          <li>가정 고양이를 기준으로 같은 행·열·대각선(8칸)에 있는 다른 색 칸들을 작은 x로 표시하며 따라가봐요.</li>
-          <li>이렇게 지웠을 때 <b>어떤 색깔의 칸이 전부 x가 되어버리면</b>(그 색이 고양이를 놓을 칸이 하나도 안 남으면) 모순이에요.</li>
-          <li>모순이 생겼다는 건 가정이 틀렸다는 뜻 → 가정 고양이를 지우고 그 칸은 <b>x 확정</b>이에요.</li>
+          <li>그 칸을 기준으로 같은 행·열·대각선(8칸)을 전부 X라고 가정하고 따라가봐요.</li>
+          <li>이렇게 지웠을 때 <b>어떤 색깔의 칸이 전부 X가 되어버리면</b>(그 색이 고양이를 놓을 칸이 하나도 안 남으면) 모순이에요.</li>
+          <li>모순이 생겼다는 건 처음 가정이 틀렸다는 뜻 → 그 칸은 고양이가 아니라 <b>X 확정</b>이에요.</li>
         </ul>
       </section>
 
       <section>
-        <h3>4. 고양이를 찾으면 자동으로 정리돼요</h3>
-        <p>고양이 자리를 맞히면 같은 행, 같은 열, 같은 색, 그리고 붙어있는 8칸까지 자동으로 큰 X로 정리돼요. 큰 X는 지울 수 없으니, 남은 후보에 집중해서 다음 자리를 찾아보세요.</p>
+        <h3>4. 고양이를 찾으면 주변부터 정리</h3>
+        <p>고양이 자리를 하나 확정했다면 같은 행, 같은 열, 같은 색, 그리고 붙어있는 8칸까지 전부 X로 정리하세요. 하나씩 정리하다 보면 다음 자리가 자연스럽게 보여요.</p>
       </section>
     </div>
   </div>
@@ -564,12 +581,6 @@ let dragPaintValue = 0;
 let lastClickCell = null;
 let lastClickTime = 0;
 let pendingClickTimeout = null;
-
-// 우클릭 / 길게 누르기 - 가정 고양이
-const LONG_PRESS_MS = 480;
-let longPressTimer = null;
-let longPressTriggered = false;
-let suppressNextContextMenu = false;
 
 function shuffle(arr){
   for(let i=arr.length-1;i>0;i--){
@@ -734,108 +745,41 @@ function growRegions(size, solutionCols){
   return reg;
 }
 
-// trueCols와 다른 정답이 하나라도 존재하면 그 배치를 반환하고, 유일하면 null을 반환해요.
-function findAlternateSolution(size, reg, trueCols){
+function countSolutions(size, reg, limit){
+  let count = 0;
   const usedCols = new Array(size).fill(false);
   const usedRegions = new Array(size).fill(false);
-  const path = new Array(size).fill(-1);
-  let result = null;
   function backtrack(row, prevCol){
-    if(result) return;
-    if(row === size){
-      let same = true;
-      for(let i=0;i<size;i++) if(path[i] !== trueCols[i]){ same = false; break; }
-      if(!same) result = path.slice();
-      return;
-    }
+    if(count >= limit) return;
+    if(row === size){ count++; return; }
     for(let col=0; col<size; col++){
-      if(result) return;
       if(usedCols[col]) continue;
       if(prevCol !== -1 && Math.abs(col - prevCol) <= 1) continue;
-      const rg = reg[row][col];
-      if(usedRegions[rg]) continue;
-      usedCols[col] = true; usedRegions[rg] = true; path[row] = col;
-      backtrack(row + 1, col);
-      usedCols[col] = false; usedRegions[rg] = false; path[row] = -1;
-      if(result) return;
+      const r = reg[row][col];
+      if(usedRegions[r]) continue;
+      usedCols[col] = true; usedRegions[r] = true;
+      backtrack(row+1, col);
+      usedCols[col] = false; usedRegions[r] = false;
+      if(count >= limit) return;
     }
   }
   backtrack(0, -1);
-  return result;
+  return count;
 }
 
-function isRegionConnected(size, reg, region){
-  const cells = [];
-  for(let r=0;r<size;r++) for(let c=0;c<size;c++) if(reg[r][c] === region) cells.push([r,c]);
-  if(cells.length === 0) return false;
-  const visited = new Set();
-  const stack = [cells[0]];
-  visited.add(cells[0][0] + ',' + cells[0][1]);
-  const dirs = [[-1,0],[1,0],[0,-1],[0,1]];
-  while(stack.length){
-    const [r,c] = stack.pop();
-    for(const [dr,dc] of dirs){
-      const nr = r+dr, nc = c+dc;
-      if(nr>=0 && nr<size && nc>=0 && nc<size && reg[nr][nc] === region){
-        const key = nr+','+nc;
-        if(!visited.has(key)){ visited.add(key); stack.push([nr,nc]); }
-      }
-    }
-  }
-  return visited.size === cells.length;
-}
-
-// 대체 정답이 나올 때마다, 그 대체 정답이 쓴 칸 하나를 이웃 색으로 옮겨서 그 대체 정답을 깨뜨려요.
-// 진짜 정답 칸(seed)은 절대 건드리지 않고, 색 구역이 끊어지지 않도록 지켜가며 반복해요.
-function repairUnique(size, cols, reg, maxIter){
-  for(let iter=0; iter<maxIter; iter++){
-    const alt = findAlternateSolution(size, reg, cols);
-    if(!alt) return true;
-    const diffRows = [];
-    for(let i=0;i<size;i++) if(alt[i] !== cols[i]) diffRows.push(i);
-    shuffle(diffRows);
-    let mutated = false;
-    for(const r of diffRows){
-      const c = alt[r];
-      if(c === cols[r]) continue; // 진짜 정답 칸은 건드리지 않아요
-      const dirs = [[-1,0],[1,0],[0,-1],[0,1]];
-      const neighborRegions = [];
-      for(const [dr,dc] of dirs){
-        const nr = r+dr, nc = c+dc;
-        if(nr>=0 && nr<size && nc>=0 && nc<size && reg[nr][nc] !== reg[r][c]) neighborRegions.push(reg[nr][nc]);
-      }
-      shuffle(neighborRegions);
-      const oldRegion = reg[r][c];
-      for(const newRegion of neighborRegions){
-        reg[r][c] = newRegion;
-        let oldCount = 0;
-        for(let rr=0; rr<size; rr++) for(let cc=0; cc<size; cc++) if(reg[rr][cc] === oldRegion) oldCount++;
-        if(oldCount > 0 && isRegionConnected(size, reg, oldRegion) && isRegionConnected(size, reg, newRegion)){
-          mutated = true;
-          break;
-        }
-        reg[r][c] = oldRegion;
-      }
-      if(mutated) break;
-    }
-    if(!mutated) return false;
-  }
-  return findAlternateSolution(size, reg, cols) === null;
-}
-
-// 정답이 여러 개인 판은 절대 나오지 않도록, 유일해질 때까지 계속 시도해요.
 function generatePuzzle(size){
-  while(true){
-    for(let attempt=0; attempt<100; attempt++){
-      const s = generateSolution(size);
-      if(!s) continue;
-      const reg = growRegions(size, s);
-      if(repairUnique(size, s, reg, 2000)){
-        return { cols: s, regions: reg };
-      }
+  const maxAttempts = 150;
+  let bestCols = null, bestRegions = null;
+  for(let attempt=0; attempt<maxAttempts; attempt++){
+    const s = generateSolution(size);
+    if(!s) continue;
+    const r = growRegions(size, s);
+    if(!bestCols){ bestCols = s; bestRegions = r; }
+    if(countSolutions(size, r, 2) === 1){
+      return { cols: s, regions: r };
     }
-    // 여기까지 오는 경우는 거의 없지만, 안전하게 처음부터 다시 시도해요.
   }
+  return { cols: bestCols, regions: bestRegions };
 }
 
 // ---------- Stage progression (1~500 built-in, then infinite) ----------
@@ -881,7 +825,6 @@ function buildBoardDOM(){
       cell.style.background = REGION_COLORS[regions[r][c]];
       cell.style.fontSize = `clamp(14px, ${Math.max(16, 70/n)}vw, 30px)`;
       cell.addEventListener('pointerdown', (e) => onPointerDown(e, r, c));
-      cell.addEventListener('contextmenu', (e) => onContextMenu(e, r, c));
       board.appendChild(cell);
     }
   }
@@ -892,11 +835,9 @@ function updateCellDOM(r, c){
   if(!cell) return;
   const v = grid[r][c];
   if(v === 0) cell.innerHTML = '';
-  else if(v === 1) cell.innerHTML = `<span class="mark-x-small">${XMARK}</span>`;
+  else if(v === 1) cell.innerHTML = `<span class="mark-x">${XMARK}</span>`;
   else if(v === 2) cell.innerHTML = `<span class="mark-cat">${CAT}</span>`;
-  else if(v === 4) cell.innerHTML = `<span class="mark-x-big">${XMARK}</span>`;
-  else if(v === 5) cell.innerHTML = `<span class="mark-cat-hypo">${CAT}</span>`;
-  else cell.innerHTML = `<span class="mark-wrong">${XMARK}</span>`;
+  else cell.innerHTML = `<div class="wrong-x-mark"></div>`;
 }
 
 function render(){
@@ -910,25 +851,12 @@ function render(){
 function onPointerDown(e, r, c){
   if(gameOver) return;
   const state = grid[r][c];
-  if(state === 2 || state === 3 || state === 4) return;
+  if(state === 2 || state === 3) return;
   e.preventDefault();
   pointerDown = true;
   dragMoved = false;
   dragStartCell = [r, c];
   dragPaintValue = state === 1 ? 0 : 1;
-  longPressTriggered = false;
-  clearTimeout(longPressTimer);
-  if(e.pointerType === 'touch'){
-    longPressTimer = setTimeout(() => {
-      if(pointerDown && !dragMoved){
-        longPressTriggered = true;
-        toggleHypothesisCat(r, c);
-        suppressNextContextMenu = true;
-        setTimeout(() => { suppressNextContextMenu = false; }, 600);
-        pointerDown = false;
-      }
-    }, LONG_PRESS_MS);
-  }
 }
 
 document.addEventListener('pointermove', (e) => {
@@ -938,21 +866,12 @@ document.addEventListener('pointermove', (e) => {
   const r = parseInt(el.dataset.row, 10), c = parseInt(el.dataset.col, 10);
   if(r === dragStartCell[0] && c === dragStartCell[1] && !dragMoved) return;
   dragMoved = true;
-  clearTimeout(longPressTimer);
   paintX(r, c, dragPaintValue);
 });
 
 document.addEventListener('pointerup', () => {
-  clearTimeout(longPressTimer);
-  if(!pointerDown){
-    longPressTriggered = false;
-    return;
-  }
+  if(!pointerDown) return;
   pointerDown = false;
-  if(longPressTriggered){
-    longPressTriggered = false;
-    return;
-  }
   const [r, c] = dragStartCell;
   if(dragMoved){
     paintX(r, c, dragPaintValue);
@@ -960,7 +879,7 @@ document.addEventListener('pointerup', () => {
   }
   const currentState = grid[r][c];
   if(currentState === 1){
-    // 작은 x가 있는 칸은 클릭하면 바로 지워요 (더블클릭 판정 없음)
+    // 흰 X가 있는 칸은 클릭하면 바로 지워요 (더블클릭 판정 없음)
     clearTimeout(pendingClickTimeout);
     pendingClickTimeout = null;
     lastClickCell = null;
@@ -989,36 +908,9 @@ document.addEventListener('pointerup', () => {
   }
 });
 
-// 우클릭(데스크톱) / 길게 누르기(모바일)로 "가정 고양이"를 놓거나 지워요.
-// 실제 정답 확정이 아니라 임시 표시라서 언제든 다시 우클릭/길게 눌러 지울 수 있어요.
-function onContextMenu(e, r, c){
-  e.preventDefault();
-  if(gameOver) return;
-  if(suppressNextContextMenu){
-    suppressNextContextMenu = false;
-    return;
-  }
-  toggleHypothesisCat(r, c);
-}
-
-function toggleHypothesisCat(r, c){
-  if(gameOver) return;
-  const state = grid[r][c];
-  if(state === 2 || state === 3 || state === 4) return;
-  if(state === 5){
-    grid[r][c] = 0;
-    updateCellDOM(r, c);
-    sfxMarkOff();
-  } else {
-    grid[r][c] = 5;
-    updateCellDOM(r, c);
-    sfxMarkOn();
-  }
-}
-
 function paintX(r, c, value){
   const state = grid[r][c];
-  if(state === 2 || state === 3 || state === 4 || state === 5) return;
+  if(state === 2 || state === 3) return;
   if(state !== value){
     grid[r][c] = value;
     updateCellDOM(r, c);
@@ -1029,46 +921,19 @@ function paintX(r, c, value){
 function toggleX(r, c){
   if(gameOver) return;
   const state = grid[r][c];
-  if(state === 2 || state === 3 || state === 4 || state === 5) return;
+  if(state === 2 || state === 3) return;
   grid[r][c] = state === 1 ? 0 : 1;
   updateCellDOM(r, c);
   grid[r][c] === 1 ? sfxMarkOn() : sfxMarkOff();
-}
-
-// 고양이를 확정한 칸을 기준으로 같은 행/열/색/인접 8칸을 자동으로 큰 X(4)로 잠가요.
-// 이미 고양이(2)나 오답 표시(3)인 칸은 건드리지 않아요.
-function autoMarkAroundCat(r, c){
-  const region = regions[r][c];
-  for(let i=0;i<n;i++){
-    if(i !== c && grid[r][i] !== 2 && grid[r][i] !== 3) grid[r][i] = 4;
-    if(i !== r && grid[i][c] !== 2 && grid[i][c] !== 3) grid[i][c] = 4;
-  }
-  for(let rr=0; rr<n; rr++){
-    for(let cc=0; cc<n; cc++){
-      if(regions[rr][cc] === region && !(rr === r && cc === c) && grid[rr][cc] !== 2 && grid[rr][cc] !== 3){
-        grid[rr][cc] = 4;
-      }
-    }
-  }
-  for(let dr=-1; dr<=1; dr++){
-    for(let dc=-1; dc<=1; dc++){
-      if(dr === 0 && dc === 0) continue;
-      const nr = r + dr, nc = c + dc;
-      if(nr>=0 && nr<n && nc>=0 && nc<n && grid[nr][nc] !== 2 && grid[nr][nc] !== 3){
-        grid[nr][nc] = 4;
-      }
-    }
-  }
 }
 
 // ---------- Game logic ----------
 function reveal(r, c){
   if(gameOver) return;
   const state = grid[r][c];
-  if(state === 2 || state === 3 || state === 4) return;
+  if(state === 2 || state === 3) return;
   if(cols[r] === c){
     grid[r][c] = 2;
-    autoMarkAroundCat(r, c);
     render();
     sfxCorrect();
     checkWin();
@@ -1093,7 +958,6 @@ function onHint(){
   const r = candidates[Math.floor(Math.random()*candidates.length)];
   const c = cols[r];
   grid[r][c] = 2;
-  autoMarkAroundCat(r, c);
   hintsLeft--;
   render();
   sfxHint();

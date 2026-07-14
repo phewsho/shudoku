@@ -858,12 +858,12 @@ function generatePuzzle(size){
 // ---------- Stage progression (1~500 built-in, then infinite) ----------
 const MAX_BUILT_STAGE = 500;
 const MIN_SIZE = 6;
-const MAX_SIZE = 12;
+const MAX_SIZE = 10;
 function getStageSize(stage){
-  const sizesEarly = [6, 7, 8, 9, 10];
-  const sizesLate = [7, 8, 8, 9, 9, 10, 10, 10, 11, 11, 12, 12, 12];
-  const pool = stage <= 50 ? sizesEarly : sizesLate;
-  return pool[(stage * 9301 + 49297) % pool.length];
+  const sizes = [6,7,8,9,10];
+
+  // 같은 스테이지는 항상 같은 난이도가 나오도록
+  return sizes[(stage * 9301 + 49297) % sizes.length];
 }
 
 function getHintCountForSize(size){

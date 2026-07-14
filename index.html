@@ -590,30 +590,10 @@ let suppressNextContextMenu = false;
 
 function shuffle(arr){
   for(let i=arr.length-1;i>0;i--){
-    const j = Math.floor(currentRng()*(i+1));
+    const j = Math.floor(Math.random()*(i+1));
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
   return arr;
-}
-
-// ---------- Seeded RNG (같은 스테이지는 항상 같은 판이 나오도록) ----------
-let currentRng = Math.random; // 퍼즐 생성 중에만 시드 고정 RNG로 교체돼요.
-
-function mulberry32(seed){
-  let a = seed >>> 0;
-  return function(){
-    a |= 0; a = (a + 0x6D2B79F5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-function hashSeed(x){
-  x = Math.imul(x ^ (x >>> 16), 0x45d9f3b);
-  x = Math.imul(x ^ (x >>> 16), 0x45d9f3b);
-  x = x ^ (x >>> 16);
-  return x >>> 0;
 }
 
 // ---------- Sound engine (soft, cute tones) ----------
@@ -757,7 +737,7 @@ function growRegions(size, solutionCols){
         }
       }
       if(neighborRegions.length > 0){
-        reg[r][c] = neighborRegions[Math.floor(currentRng()*neighborRegions.length)];
+        reg[r][c] = neighborRegions[Math.floor(Math.random()*neighborRegions.length)];
       } else {
         next.push([r,c]);
       }
@@ -861,29 +841,17 @@ function repairUnique(size, cols, reg, maxIter){
 }
 
 // 정답이 여러 개인 판은 절대 나오지 않도록, 유일해질 때까지 계속 시도해요.
-// stage가 주어지면 그 스테이지 번호로 시드를 고정해서, 같은 스테이지는 항상 같은 판이 나와요.
-function generatePuzzle(size, stage){
-  const useSeed = (stage !== undefined && stage !== null);
-  if(useSeed) currentRng = mulberry32(hashSeed(stage));
-  try{
-    let seedBump = 0;
-    while(true){
-      for(let attempt=0; attempt<100; attempt++){
-        const s = generateSolution(size);
-        if(!s) continue;
-        const reg = growRegions(size, s);
-        if(repairUnique(size, s, reg, 2000)){
-          return { cols: s, regions: reg };
-        }
-      }
-      // 여기까지 오는 경우는 거의 없지만, 안전하게 (시드는 살짝 바꿔서) 처음부터 다시 시도해요.
-      if(useSeed){
-        seedBump++;
-        currentRng = mulberry32(hashSeed(stage) ^ hashSeed(seedBump * 7919 + 1));
+function generatePuzzle(size){
+  while(true){
+    for(let attempt=0; attempt<100; attempt++){
+      const s = generateSolution(size);
+      if(!s) continue;
+      const reg = growRegions(size, s);
+      if(repairUnique(size, s, reg, 2000)){
+        return { cols: s, regions: reg };
       }
     }
-  } finally {
-    if(useSeed) currentRng = Math.random;
+    // 여기까지 오는 경우는 거의 없지만, 안전하게 처음부터 다시 시도해요.
   }
 }
 
@@ -1244,7 +1212,7 @@ function newGame(){
   document.getElementById('overlay').classList.remove('show');
   document.getElementById('answerBanner').classList.remove('show');
   n = getStageSize(stage);
-  const puzzle = generatePuzzle(n, stage);
+  const puzzle = generatePuzzle(n);
   cols = puzzle.cols;
   regions = puzzle.regions;
   grid = Array.from({length:n}, () => Array(n).fill(0));
